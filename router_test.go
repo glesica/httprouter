@@ -30,19 +30,44 @@ func (m *mockResponseWriter) WriteString(s string) (n int, err error) {
 func (m *mockResponseWriter) WriteHeader(int) {}
 
 func TestParams(t *testing.T) {
-	ps := Params{
-		Param{"param1", "value1"},
-		Param{"param2", "value2"},
-		Param{"param3", "value3"},
-	}
-	for i := range ps {
-		if val := ps.ByName(ps[i].Key); val != ps[i].Value {
-			t.Errorf("Wrong value for %s: Got %s; Want %s", ps[i].Key, val, ps[i].Value)
+	t.Run("string values", func(t *testing.T) {
+		ps := Params{
+			Param{"param1", "value1"},
+			Param{"param2", "value2"},
+			Param{"param3", "value3"},
 		}
-	}
-	if val := ps.ByName("noKey"); val != "" {
-		t.Errorf("Expected empty string for not found key; got: %s", val)
-	}
+		for i := range ps {
+			if val := ps.ByName(ps[i].Key); val != ps[i].Value {
+				t.Errorf("Wrong value for %s: Got %s; Want %s", ps[i].Key, val, ps[i].Value)
+			}
+		}
+		if val := ps.ByName("noKey"); val != "" {
+			t.Errorf("Expected empty string for not found key; got: %s", val)
+		}
+	})
+
+	t.Run("int values", func(t *testing.T) {
+		magicInt := 42
+
+		ps := Params{
+			Param{"param1", "noint1"},
+			Param{"param2", fmt.Sprintf("%d", magicInt)},
+			Param{"param3", "noint3"},
+		}
+
+		val, err := ps.IntByName("param1")
+		if err == nil {
+			t.Error("Expected conversion error")
+		}
+
+		val, err = ps.IntByName("param2")
+		if err != nil {
+			t.Errorf("Expected string to convert to int, error was: %s", err.Error())
+		}
+		if val != magicInt {
+			t.Errorf("Expected int to be %d, got %d", magicInt, val)
+		}
+	})
 }
 
 func TestRouter(t *testing.T) {

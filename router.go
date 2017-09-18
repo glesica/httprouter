@@ -78,6 +78,8 @@ package httprouter
 
 import (
 	"net/http"
+	"strconv"
+	"errors"
 )
 
 // Handle is a function that can be registered to a route to handle HTTP
@@ -105,6 +107,22 @@ func (ps Params) ByName(name string) string {
 		}
 	}
 	return ""
+}
+
+// IntByName returns the value of the first Param which key matches the given
+// name, converted to an int. If no matching Param is found or if the Param
+// value fails to convert to an int, an error is returned.
+func (ps Params) IntByName(name string) (int, error) {
+	for i := range ps {
+		if ps[i].Key == name {
+			intValue, err := strconv.Atoi(ps[i].Value)
+			if err != nil {
+				return 0, err
+			}
+			return intValue, nil
+		}
+	}
+	return 0, errors.New("Key " +name+ " not found")
 }
 
 // Router is a http.Handler which can be used to dispatch requests to different
